@@ -38,22 +38,9 @@ def create_mesh(npoints):
 def get_input(local=False):
     if local:
         print("Reading local file branin.arff.")
-
-        return "data/inputs/branin.arff"
-
-    dids = os.getenv("DIDS", None)
-
-    if not dids:
-        print("No DIDs found in environment. Aborting.")
-        return
-
-    dids = json.loads(dids)
-
-    for did in dids:
-        filename = f"data/inputs/{did}/0"  # 0 for metadata service
-        print(f"Reading asset file {filename}.")
-
-        return filename
+        return "branin.arff"
+    else:
+        return "/data/inputs/branin.arff"  
 
 
 def plot(Zhat, npoints):
@@ -90,7 +77,7 @@ def run_gpr(local=False):
         print("Plotting results")
         plot(Zhat, npoints)
 
-    filename = "gpr.pickle" if local else "/data/outputs/result"
+    filename = "gpr.pickle" if local else "/data/outputs/gpr.pickle"
     with open(filename, "wb") as pickle_file:
         print(f"Pickling results in {filename}")
         pickle.dump(Zhat, pickle_file)
