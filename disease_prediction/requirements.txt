@@ -1,0 +1,7 @@
+argparse
+requests
+pandas
+numpy
+scikit-learn
+tqdm
+scipy
