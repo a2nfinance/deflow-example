@@ -68,11 +68,12 @@ The results of the prediction model will be outputted in the ouput/ folder, incl
 
 # Directory Structure
 
-├── data/                     # Raw and preprocessed data files
-├── src/                      # Source code for the workflow steps
-│   ├── preprocess.py         # Script for data preprocessing
-│   ├── generate_data.py      # Script for data generation
-│   ├── feature_selection.py  # Script for feature selection
-│   └── train_and_predict.py  # Script for training and prediction
-├── README.md                 # Project description and instructions
+├── data/                     # Raw and preprocessed data files       
+├── src/                      # Source code for the workflow steps   
+│   ├── meta_data_collection         # Collecting meta data      
+│   ├── data_preprocessing         # Script for data preprocessing    
+│   ├── data_generation      # Scripts for data generation 
+│   ├── feature_selection  # Scripts for feature selection     
+│   └── predictions  # Script for prediction  
+├── README.md                 # Project description and instructions   
 ├── requirements.txt          # Required packages for the project
