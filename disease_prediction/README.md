@@ -72,7 +72,7 @@ The results of the prediction model will be outputted in the ouput/ folder, incl
 ├── src/                      # Source code for the workflow steps   
 │   ├── meta_data_collection         # Collecting meta data      
 │   ├── data_preprocessing         # Script for data preprocessing    
-│   ├── data_generation      # Scripts for data generation 
+│   ├── data_generation      # Scripts for data generation      
 │   ├── feature_selection  # Scripts for feature selection     
 │   └── predictions  # Script for prediction  
 ├── README.md                 # Project description and instructions   
