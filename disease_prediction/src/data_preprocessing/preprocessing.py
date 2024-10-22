@@ -1,9 +1,7 @@
 import zipfile
 import pandas as pd
 import io
-import argparse
-import os
-
+import sys
 def read_vcf(vcf_file):
     """Reads a VCF file from a ZipExtFile and returns it as a pandas DataFrame."""
     vcf_names = None  # Initialize vcf_names
@@ -98,39 +96,29 @@ def add_phenotype(obs, geno):
     
     return geno
 
-if __name__ == "__main__":
-    # Command-line argument parsing with defaults
-    parser = argparse.ArgumentParser(description="Process files from a ZIP archive.")
-    
-    # Adding input_data with a default value
-    parser.add_argument(
-        "--input_data", 
-        default="../meta_data_collection/output/combined_files.zip", 
-        help="Path to the ZIP file (default: combined_files.zip)"
-    )
-    
-    # Adding output_dir with a default value
-    parser.add_argument(
-        "--output_dir", 
-        default="output", 
-        help="Directory to save processed files (default: output_data)"
-    )
+def get_input(local=False):
+    if local:
+        print("Reading local file disease.zip.")
+        return "disease.zip"
+    else:
+        return "/data/inputs/disease.zip"  
 
-    args = parser.parse_args()
-
-    # Ensure the output directory exists if provided
-    if args.output_dir:
-        os.makedirs(args.output_dir, exist_ok=True)
-
+def run_process(local=False):
+    input_data = get_input(local)
+    filename = "disease.csv" if local else "/data/outputs/disease.csv"
+     # Command-line argument parsing with defaults    
     # Process files from the ZIP
-    data_1, data_2 = read_files_from_zip(args.input_data, args.output_dir)
+    data_1, data_2 = read_files_from_zip(input_data)
     # Data including encoded genotypes
     print ("Encode bi-allelic genotypes by 0, 1, 2")
     geno = get_genotype(data_2)
     df = add_phenotype(data_1, geno)
-    print ("Save the training data to ", args.output_dir + "/data.csv")
-    df.to_csv(args.output_dir + "/data.csv")
+    print ("Save the training data to ", filename)
+    df.to_csv(filename)
 
+if __name__ == "__main__":
+    local = len(sys.argv) == 2 and sys.argv[1] == "local"
+    run_process(local)
     
 
 
