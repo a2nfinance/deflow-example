@@ -4,11 +4,16 @@ import sys
 import pandas as pd
 
 def generate_data(local=False):
-    
-    columns = []
     # Get data from a local file.
-    sample_data = get_input("data/position.txt")
-    for x in sample_data.iloc[:, 0]:
+    file_path = get_input(local)
+
+    print("Reading local file.")
+    # Attempt to process as a file
+    data = pd.read_csv(file_path, header = None)
+
+    columns = []
+
+    for x in data.iloc[:, 0]:
         columns.append(x)
     # Define the columns (Chromosome, Position, Reference, Alternate)
     columns *= 10
@@ -25,11 +30,8 @@ def generate_data(local=False):
         row.append(random.choice([0, 1]))  # PHENOTYPE: 0, 1
         rows.append(row)
     
-    filename = "output/generated_data.csv" if local else "output/generated_data.csv"
+    filename = "generated.csv" if local else "/data/outputs/generated_data.csv"
     
-    if "output":
-        os.makedirs( "output", exist_ok=True)
-
     with open(filename, "w") as f:
         # Write header
         f.write(",".join(columns) + "\n")
@@ -41,14 +43,9 @@ def generate_data(local=False):
 
 def get_input(local=False):
     if local:
-        print("Reading local file.")
-        # Attempt to process as a file
-        data = pd.read_csv(local, header = None)
-        print("File data:")
-        print(data.head())  # Show the first few rows of the CSV file
-        return data
+        return "position.txt"
     else:
-        return "/data/inputs/sample_data.csv"  
+        return "/data/inputs/position.txt"  
 
 if __name__ == "__main__":
     local = len(sys.argv) == 2 and sys.argv[1] == "local"
