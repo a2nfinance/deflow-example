@@ -1,8 +1,10 @@
 import os
 import random
-import argparse
-
-def generate_data(output_dir, filename="generated_data.csv"):
+import sys
+def generate_data(local=False):
+    
+    sample_file = get_input(local)
+    # Should get data from file here.
     # Define the columns (Chromosome, Position, Reference, Alternate)
     columns = [
         "chr1_18236545_A_G", "chr1_72372846_A_G", "chr1_72372878_G_T", "chr1_72559191_G_A",
@@ -25,40 +27,23 @@ def generate_data(output_dir, filename="generated_data.csv"):
         row.append(random.choice([0, 1]))  # PHENOTYPE: 0, 1
         rows.append(row)
     
-    # Ensure output directory exists
-    if not os.path.exists(output_dir):
-        os.makedirs(output_dir)
-    
-    # Save to CSV
-    output_path = os.path.join(output_dir, filename)
-    with open(output_path, "w") as f:
+    filename = "generated_data.csv" if local else "/data/outputs/generated_data.csv"
+    with open(filename, "w") as f:
         # Write header
         f.write(",".join(columns) + "\n")
         # Write rows
         for i, row in enumerate(rows):
             f.write(f"SRR{i+6996662}," + ",".join(map(str, row)) + "\n")
 
-    print(f"File saved to {output_path}")
+    print(f"File saved to {filename}")
 
+def get_input(local=False):
+    if local:
+        print("Reading local file sample_data.")
+        return "sample_data.csv"
+    else:
+        return "/data/inputs/sample_data.csv"  
 
 if __name__ == "__main__":
-    # Command-line argument parsing with defaults
-    parser = argparse.ArgumentParser(description="Process files from a ZIP archive.")
-
-    
-    # Adding output_dir with a default value
-    parser.add_argument(
-        "--output_dir", 
-        default="output", 
-        help="Directory to save processed files (default: output_data)"
-    )
-
-    args = parser.parse_args()
-
-    # Ensure the output directory exists if provided
-    if args.output_dir:
-        os.makedirs(args.output_dir, exist_ok=True)
-
-    print ("Generating data")
-    generate_data(args.output_dir) 
-    print("Finish")
+    local = len(sys.argv) == 2 and sys.argv[1] == "local"
+    generate_data(local)
