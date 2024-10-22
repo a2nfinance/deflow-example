@@ -30,7 +30,7 @@ def generate_data(local=False):
         row.append(random.choice([0, 1]))  # PHENOTYPE: 0, 1
         rows.append(row)
     
-    filename = "generated.csv" if local else "/data/outputs/generated_data.csv"
+    filename = "generated_data.csv" if local else "/data/outputs/generated_data.csv"
     
     with open(filename, "w") as f:
         # Write header
