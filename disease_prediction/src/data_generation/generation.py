@@ -7,7 +7,7 @@ def generate_data(local=False):
     
     columns = []
     # Get data from a local file.
-    sample_data = get_input("../../data/position.txt")
+    sample_data = get_input("data/position.txt")
     for x in sample_data.iloc[:, 0]:
         columns.append(x)
     # Define the columns (Chromosome, Position, Reference, Alternate)
