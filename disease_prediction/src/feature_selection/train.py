@@ -1,12 +1,96 @@
 # Import packages
-from data_loader import load_data
+import numpy as np
 import pandas as pd
 import zipfile
-import models.dt as dt
 import argparse
 import time
 import os
 import io
+
+from sklearn.model_selection import GridSearchCV
+from sklearn.feature_selection import RFE
+from sklearn import tree
+from sklearn.metrics import roc_auc_score
+from tqdm import tqdm
+
+from sklearn.preprocessing import StandardScaler
+from sklearn.model_selection import train_test_split
+
+# Load data
+def load_data(df):
+    # Read genotype-phenotype data after subsequent data preprocessing
+    #data = df.set_index('Unnamed: 0')
+    data = df.copy()
+    # Split original data to training and testing data
+    X_train, X_test, y_train, y_test = train_test_split(data.iloc[:,0:-1], data.iloc[:,-1], test_size=0.2, random_state=42)
+   
+    feature_names = list(data.columns)
+    scaler = StandardScaler()
+    X_train = scaler.fit_transform(X_train)
+    X_test = scaler.transform(X_test)
+
+    # Convert all to numpy
+    y_train = y_train.to_numpy()
+    y_test = y_test.to_numpy()
+    
+    return X_train, y_train, X_test, y_test, feature_names, scaler
+
+# Select features using decision tree model
+def rfe_dt(X_train, y_train, X_test, y_test, output):
+    
+    rfe_dt = tree.DecisionTreeClassifier(random_state=7)
+    best_auc = list()
+    features = []
+    iddd = []
+    gr = []
+
+
+    for i in tqdm(range(1, len(X_train[0]))):
+        rfe = RFE(rfe_dt, n_features_to_select=i)
+        rfe.fit_transform(X_train, y_train)
+        # Reduce X to the selected features.
+        X_train_reduce = rfe.transform(X_train)
+        X_test_reduce = rfe.transform(X_test)
+        # Decision tree model
+        roc_auc, dt_grid = train_dt(X_train_reduce, y_train, X_test_reduce, y_test)
+        if i % 10 == 0:
+            print("Number of features:", i, "AUC: ", roc_auc)
+        features.append(rfe.support_)
+        best_auc.append(roc_auc)
+        gr.append(dt_grid)
+        iddd.append(i)
+
+    print("The best AUC of Decision Tree: ", max(best_auc))
+    idd = np.argmax(best_auc)
+    print("Number of Selected Features is: ", iddd[idd])
+    ft = features[idd] 
+
+    # Save the model
+    #dump(gr[idd], output + "/dt.joblib")
+    indice = [i for i, x in enumerate(ft) if x]
+    
+    pd.DataFrame({'features':indice}).to_csv(output + "/dt_features.csv")
+
+
+def train_dt(X_train, y_train, X_test, y_test):
+
+    # Create decision-tree cross validation
+
+    grid = {'criterion': ["gini"], 
+            'splitter': ["best"],
+            'max_features': ["sqrt"],
+            'max_depth' : [2, 10]}
+    
+    clf = tree.DecisionTreeClassifier(random_state=7)
+    dt_grid = GridSearchCV(clf, grid, scoring='roc_auc', cv=5, n_jobs = -1)
+    
+    # Train the regressor
+    dt_grid.fit(X_train, y_train)
+    # Make predictions using the optimised parameters
+    dt_pred = dt_grid.predict(X_test)
+    roc_auc = round(roc_auc_score (y_test, dt_pred), 3)
+
+    return (roc_auc, dt_grid)
 
 parser = argparse.ArgumentParser(
                     prog='Training models using Machine Learning',
@@ -185,7 +269,7 @@ if __name__ == '__main__':
     print("Decision-Tree RFE")
     # Start timer
     start_time = time.time()
-    dt.rfe_dt(X_train, y_train, X_test, y_test, args.output_dir)
+    rfe_dt(X_train, y_train, X_test, y_test, args.output_dir)
     end_time = time.time()
     # Calculate elapsed time
     dt_elapsed_time = end_time - start_time
