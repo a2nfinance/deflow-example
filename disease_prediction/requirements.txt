@@ -1,5 +1,3 @@
-argparse
-requests
 pandas
 numpy
 scikit-learn

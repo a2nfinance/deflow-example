@@ -2,11 +2,9 @@
 from __future__ import print_function, division
 import pandas as pd
 import numpy as np
-import argparse
 import time
 import zipfile
-import os
-
+import sys
 from sklearn.model_selection import GridSearchCV
 from sklearn.feature_selection import RFE
 from sklearn import tree
@@ -158,22 +156,6 @@ def train_dt(X_train, y_train, X_test, y_test):
 
     return (roc_auc, dt_grid)
 
-parser = argparse.ArgumentParser(
-                    prog='Training models using Machine Learning',
-                    description='Logistic Regression, Decision Tree, and SVM',
-                    epilog='Help')
-
-parser.add_argument(
-    '--input_data', 
-    default="../feature_selection/data/combined_files.zip",
-    metavar='i', type=str, help='Input path')
-
-parser.add_argument('--output_dir', 
-                    default="output",
-                    metavar='o', type=str, help='Output path')
-
-args = parser.parse_args()
-
 def read_files_from_zip(zip_path, output_dir=None):
     """Read and process each file in the ZIP archive without extracting."""
     df = []
@@ -202,7 +184,7 @@ def read_files_from_zip(zip_path, output_dir=None):
                 
     return df
 
-if __name__ == '__main__':
+def run_prediction(local=False):
     print("")
     print("")
     print("|============================================================================|")
@@ -216,14 +198,13 @@ if __name__ == '__main__':
     print("")
     print("Import data may take several minutes, please wait...")
     print("")
-
+    input_file = "combined_files.zip" if local else "/data/inputs/combined_files.zip"
+    output_file = "dt_reduce_evaluations.csv" if local else "/data/outputs/dt_reduce_evaluations.csv"
     # Ensure the output directory exists if provided
-    if args.output_dir:
-        os.makedirs(args.output_dir, exist_ok=True)
 
-    df = read_files_from_zip(args.input_data)
+    df = read_files_from_zip(input_file)
     # Load genotype-phenotype data 
-    X_train, y_train, X_test, y_test, feature_names, _ = load_data(df[0])
+    X_train, y_train, X_test, y_test, _, _ = load_data(df[0])
     indice_features = df[1]['features']
 
     # Get data with the selected features
@@ -242,7 +223,11 @@ if __name__ == '__main__':
     auc = [dt_auc_reduce]
     
     print("********************************** SAVING **********************************")
-    eval(dt_md_reduce, X_test_reduce, y_test).to_csv(args.output_dir + "/dt_reduce_evaluations.csv")
+    eval(dt_md_reduce, X_test_reduce, y_test).to_csv(output_file)
     print("********************************* FINISHED *********************************")
     print("")
+
+if __name__ == '__main__':
+    local = len(sys.argv) == 2 and sys.argv[1] == "local"
+    run_prediction(local)
     
