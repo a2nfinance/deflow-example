@@ -1,4 +1,3 @@
-import os
 import random
 import sys
 import pandas as pd

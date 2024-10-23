@@ -2,10 +2,10 @@
 import numpy as np
 import pandas as pd
 import zipfile
-import argparse
 import time
 import os
 import io
+import sys
 
 from sklearn.model_selection import GridSearchCV
 from sklearn.feature_selection import RFE
@@ -36,7 +36,7 @@ def load_data(df):
     return X_train, y_train, X_test, y_test, feature_names, scaler
 
 # Select features using decision tree model
-def rfe_dt(X_train, y_train, X_test, y_test, output):
+def rfe_dt(X_train, y_train, X_test, y_test, feature_output_file):
     
     rfe_dt = tree.DecisionTreeClassifier(random_state=7)
     best_auc = list()
@@ -69,7 +69,7 @@ def rfe_dt(X_train, y_train, X_test, y_test, output):
     #dump(gr[idd], output + "/dt.joblib")
     indice = [i for i, x in enumerate(ft) if x]
     
-    pd.DataFrame({'features':indice}).to_csv(output + "/dt_features.csv")
+    pd.DataFrame({'features':indice}).to_csv(feature_output_file)
 
 
 def train_dt(X_train, y_train, X_test, y_test):
@@ -91,45 +91,6 @@ def train_dt(X_train, y_train, X_test, y_test):
     roc_auc = round(roc_auc_score (y_test, dt_pred), 3)
 
     return (roc_auc, dt_grid)
-
-parser = argparse.ArgumentParser(
-                    prog='Training models using Machine Learning',
-                    description='Logistic Regression, Decision Tree, and SVM',
-                    epilog='Help')
-
-parser.add_argument(
-    '--meta', 
-    default="../meta_data_collection/output/combined_files.zip", 
-    help="Path to the ZIP file (default: combined_files.zip)",
-    type=str
-    )
-
-parser.add_argument(
-        "--data", 
-        default="../data_preprocessing/output/data.csv", 
-        help="Data after preprocessing for training",
-        type = str
-    )
-
-parser.add_argument(
-        "--gen_data", 
-        default="../data_generation/output/generated_data.csv", 
-        help="Generated data for training",
-        type = str
-    )
-
-parser.add_argument(
-        "--output_dir", 
-        default="output", 
-        help="Directory to save processed files (default: output)"
-    )
-
-parser.add_argument(
-        "--output_data", 
-        default="data", 
-        help="Directory to save processed files (default: data)"
-    )
-args = parser.parse_args()
 
 def read_vcf(vcf_file):
     """Reads a VCF file from a ZipExtFile and returns it as a pandas DataFrame."""
@@ -179,43 +140,6 @@ def combine_files_into_zip(parent_folder, output_zip):
     
     print(f"Files combined into {zip_file_path}")
 
-def read_files_from_zip(zip_path, output_dir=None):
-    """Read and process each file in the ZIP archive without extracting."""
-    with zipfile.ZipFile(zip_path, 'r') as zip_ref:
-        for file_name in zip_ref.namelist():
-            print(f"Processing {file_name} from the ZIP archive:")
-
-            with zip_ref.open(file_name) as file:  # file is a ZipExtFile object
-                # Check file size
-                file_size = zip_ref.getinfo(file_name).file_size
-                print(f"File size: {file_size} bytes")
-
-                if file_size == 0:
-                    print(f"Warning: {file_name} is empty.")
-                    continue  # Skip empty files
-
-                # Attempt to process as a CSV file
-                try:
-                    file.seek(0)  # Reset file pointer to the beginning
-                    data_1 = pd.read_csv(file)
-                    print("CSV, TXT file data:")
-                    print(data_1.head())  # Show the first few rows of the CSV file
-
-                except pd.errors.EmptyDataError:
-                    print(f"Error: {file_name} is empty.")
-                except pd.errors.ParserError:
-                    # If it's not a CSV, TXT, try to process as a VCF file
-                    try:
-                        file.seek(0)  # Reset file pointer to the beginning
-                        data_2 = read_vcf(file)  # Reading as VCF from the ZipExtFile
-                        print("VCF file data:")
-                        print(data_2.head())  # Show the first few rows of the VCF file
-                    except ValueError as e:
-                        print(f"Failed to process {file_name} as a VCF file: {e}")
-                    except Exception as e:
-                        print(f"An unexpected error occurred while processing {file_name}: {e}")
-    return data_1, data_2
-
 def concatenate_data (csv_file1, csv_file2):
 
     # Read the CSV files into DataFrames
@@ -233,9 +157,8 @@ def concatenate_data (csv_file1, csv_file2):
     df_combined.fillna(0, inplace=True)
     print('Files concatenated without duplicates successfully.')
     return df_combined
-    
-if __name__ == '__main__':
 
+def run_feature_selection(local: False):
     print("")
     print("")
     print("|============================================================================|")
@@ -250,26 +173,22 @@ if __name__ == '__main__':
     print("Import data may take several minutes, please wait...")
     print("")
 
-    # Ensure the output directory exists if provided
-    if args.output_dir:
-        os.makedirs(args.output_dir, exist_ok=True)
-    
-    if args.output_data:
-        os.makedirs(args.output_data, exist_ok=True)
-
-    # Process files from the ZIP
-    meta, _ = read_files_from_zip(args.meta)
-    # Combine data and generated data
-    combined_df = concatenate_data(args.data, args.gen_data)
+    input_data_file = "data/disease.csv" if local else "/data/inputs/disease.csv"
+    input_generated_data_file = "data/generated_data.csv" if local else "/data/inputs/generated_data.csv"
+    processing_output_dir = "data" if local else "/data/inputs" 
+    feature_output_file = "data/dt_features.csv" if local else "/data/inputs/dt_features.csv"
+    combine_data_output_folter = "." if local else "/data/outputs"
+    # Combine data and generated datay
+    combined_df = concatenate_data(input_data_file, input_generated_data_file)
     print ("Combined data: ", combined_df.head())
     
     # Load genotype-phenotype data 
-    X_train, y_train, X_test, y_test, feature_names, _ = load_data(combined_df)
+    X_train, y_train, X_test, y_test, _, _ = load_data(combined_df)
 
     print("Decision-Tree RFE")
     # Start timer
     start_time = time.time()
-    rfe_dt(X_train, y_train, X_test, y_test, args.output_dir)
+    rfe_dt(X_train, y_train, X_test, y_test, feature_output_file)
     end_time = time.time()
     # Calculate elapsed time
     dt_elapsed_time = end_time - start_time
@@ -278,12 +197,19 @@ if __name__ == '__main__':
  
 
     print("********************************** SAVING **********************************")
-    
     #pd.DataFrame({'DT':[dt_elapsed_time]}).to_csv(args.output_dir + "/Time.csv")
-    combined_df.to_csv(args.output_dir + "/combined_data.csv")
+    combined_df.to_csv(processing_output_dir + "/combined_data.csv")
+    # Clean unused data here
+    os.remove(input_data_file)
+    os.remove(input_generated_data_file)
     # Get all files in the specified folder
-    combine_files_into_zip(args.output_dir, args.output_data)
+    combine_files_into_zip(processing_output_dir, combine_data_output_folter) # combined_files.zip
     print("")
     print("********************************* FINISHED *********************************")
     print("")
+    
+if __name__ == '__main__':
+    local = len(sys.argv) == 2 and sys.argv[1] == "local"
+    run_feature_selection(local)
+    
     
