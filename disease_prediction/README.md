@@ -44,27 +44,24 @@ python collection.py --output_dir <your_output_directory> --output_zip <your_out
 ```
 ### Data Preprocessing
 ```
-python preprocessing.py --input_data <your_data_directory> --output_dir <your_output_zip_file_name>
+python preprocessing.py local
 
 ```
 ### Data Generation
 ```
-python generation.py --output_dir <your_output_zip_file_name>
+python generation.py local
 
 ```
 ### Feature Selection
 ```
-python train.py --meta <your_meta_data_directory> \
-                --data <your_data_directory> \
-                --gen_data <your_generated_data_directory> \
-                --output_dir <your_output_zip_file_name>
+python train.py local
 ```
 ### Prediction
 ```
-python train.py --input_data <your_data_directory> --output_dir <your_output_zip_file_name>
+python train.py local
 ```
 3. **Evaluation**
-The results of the prediction model will be outputted in the ouput/ folder, including performance metrics such as sensitivity, accuracy, specificity, MCC, AUC.
+The results of the prediction model will be outputted in the same folder or /data/outputs/ folder, including performance metrics such as sensitivity, accuracy, specificity, MCC, AUC.
 
 # Directory Structure
 
